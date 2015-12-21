@@ -4,34 +4,30 @@ var config = require('./server_config');
 // Node libraries
 var http = require('http');
 var qs = require('querystring');
-var GoogleSpreadsheet = require("google-spreadsheet");
+var Spreadsheet = require('edit-google-spreadsheet');
 
-var sheet = new GoogleSpreadsheet("1wJ9R3M6-LeLL4jS0VY4T6lehMwondF4_oWveNP_5DPs");
+Spreadsheet.load({
+	debug: true,
+	spreadsheetId: "1wJ9R3M6-LeLL4jS0VY4T6lehMwondF4_oWveNP_5DPs",
+	worksheetId: "od6",	//worksheetName: "Sheet1"
 
-sheet.getRows( 1, function(err, row_data){
-	console.log( 'pulled in '+row_data.length + ' rows');
-});
+	oauth: {
+		email: "blake-804@ascent-data-saving.iam.gserviceaccount.com",
+		keyFile: "ascent-data-saving.pem"
+	}
+}, function sheetReady(err, spreadsheet) {
+	if(err) throw err;
 
-var creds = require("./Ascent-Data-Saving-0ba3c8d5c237.json");
-
-sheet.useServiceAccountAuth(creds, function(err) {
-	sheet.getInfo(function(err, sheetInfo) {
-		console.log(sheetInfo.title + " is loaded");
-
-		var sheet1 = sheetInfo.worksheets[0];
-		sheet1.getRows(function(err, rows) {
-			rows[0].colname = "new val";
-			rows[0].save();
-		});
+	spreadsheet.receive(function(err, rows, info) {
+		if(err) throw err;
+		console.log("Found rows: ", rows);
 	});
 
-	sheet.addRow(2, {colname: "col value"});
+	spreadsheet.add({3:{5:"hello!", 7:"goodbye!"}});
 
-	sheet.getRows(2, {
-		start: 100,
-		num: 100,
-		orderby: "name"
-	}, function(err, rowData) {
+	spreadsheet.send(function(err) {
+		if(err) throw err;
+		console.log("Updated Cell at row 3, col 5 to 'hello!'");
 	});
 });
 
